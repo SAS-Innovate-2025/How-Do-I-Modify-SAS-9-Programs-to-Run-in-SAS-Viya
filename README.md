@@ -1,11 +1,11 @@
 # How Do I Modify SAS® 9 Programs to Run in SAS®  Viya?   
 
-"Attend this hands-on workshop to learn how existing SAS® ®9 programs can be modified to execute in SAS®  Viya.
+Attend this hands-on workshop to learn how existing SAS® ®9 programs can be modified to execute in SAS®  Viya.
 Code can either run as is on the SAS®  Compute Server, or it can be modernized to process data in memory and in parallel on the SAS®  Cloud Analytic Services (CAS) server.  
 This workshop is perfect for programmers who are new to SAS®  Viya, and it addresses the three main questions that they are likely to ask.
 1.  What is Viya, and how will it improve my ability to prepare and analyze data?
 2.  Will existing SAS® 9 code work in Viya?
-3.  How must my programs change to take advantage of the new features in Viya?" 
+3.  How must my programs change to take advantage of the new features in Viya?
 
 ## Important Information
 
