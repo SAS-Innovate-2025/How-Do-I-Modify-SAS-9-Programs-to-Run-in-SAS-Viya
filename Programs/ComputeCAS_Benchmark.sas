@@ -10,10 +10,11 @@
 * Start timer *;
 %let _timer_start = %sysfunc(datetime());  
 
-libname mydata "/home/student/S23HMODV";
+libname srcData "/home/student/workshop/HODV";
+libname outpData "/home/student/workshop";
 
-data mydata.orders_clean;
-	set mydata.orders;
+data srcData.orders_clean;
+	set srcData.orders;
     Name=catx(' ',
               scan(Customer_Name,2,','),
               scan(Customer_Name,1,','));
@@ -21,16 +22,16 @@ run;
 
 title "Compute Server Program";
 
-proc contents data=mydata.orders;
+proc contents data=srcData.orders;
 run;
 
-proc freq data=mydata.orders;
+proc freq data=srcData.orders;
     tables Country OrderType;
 run;
 
-proc means data=mydata.orders;
+proc means data=srcData.orders;
     var RetailPrice;
-    output out=mydata.orders_sum;
+    output out=outpData.orders_sum;
 run;
 
 title;
@@ -44,23 +45,19 @@ run;
 
 /*********************************************************************/
 /* Section 2: SAS Program Executed CAS Server with CAS-enabled Steps */
-/*     Link to CAS-enabled Procedure Documentation:                  */
-/*     https://go.documentation.sas.com/doc/en/pgmsascdc/v_040/procs2actions/p0275qj00ns5pen16ijvuz8f8j5k.htm */
 /*********************************************************************/
+
+cas mySess sessopts=(metrics=true);
 
 * Start timer *;
 %let _timer_start = %sysfunc(datetime());  
 
-cas mySession;
-
-libname mydata "/home/student/S23HMODV";
-
 * Define MYCAS caslib pointing to workshop files and map a libref;
-caslib mycas path="/home/student/S23HMODV" libref=mycas;
+caslib mycas path="/home/student/workshop/HODV" libref=mycas;
 
-* Load orders.sashdat to MYCAS caslib;
+* Load orders to MYCAS caslib;
 proc casutil;
-	load casdata="orders.sashdat" incaslib="mycas" 
+	load casdata="orders.sas7bdat" incaslib="mycas" 
 	outcaslib="mycas" casout="orders" replace;
 run;
 
@@ -71,6 +68,7 @@ data mycas.orders_clean;
               scan(Customer_Name,2,','),
               scan(Customer_Name,1,','));
 run;
+
 
 title "CAS-Enabled Program";
 
@@ -88,8 +86,6 @@ run;
 
 title;
 
-cas mysession terminate;
-
 /* Stop timer */
 data _null_;
   dur = datetime() - &_timer_start;
@@ -97,22 +93,22 @@ data _null_;
 run;
 
 
+
 /************************************************************/
 /* Section 3: SAS Program Executed on CAS Server with CASL */
 /************************************************************/
 
+
 * Start timer *;
 %let _timer_start = %sysfunc(datetime());  
 
-cas mySession;
-
 title "CASL Program";
+
 proc cas;
   * Create dictionary to reference orders table in Casuser;
     tbl={name='orders', caslib='mycas'};
 
-  * Create CASL variable named DS to store DATA step code. Both 
-      input and output tables must be in-memory;
+  * Create CASL variable named DS to store DATA step code.;
     source ds;
         data mycas.orders_clean;
 	        set mycas.orders;
@@ -121,20 +117,6 @@ proc cas;
                  scan(Customer_Name,1,','));
         run;
     endsource;
-
-  * Define caslib pointing to workship files and load orders.sashdat to mycas;
-   table.addCaslib / 
-         name="mycas",
-         path="/home/student/S23HMODV";
-
-  * Drop orders from mycas if it exists;
-    table.dropTable / name="orders", 
-                      caslib="mycas", 
-                      quiet=true;
-
-    table.loadTable / 
-        path="orders.sashdat", caslib="mycas", 
-        casOut={name="orders", caslib="mycas", replace=true};
 
   * Execute DATA step code;
     dataStep.runCode / code=ds;
@@ -154,12 +136,13 @@ proc cas;
         input={'RetailPrice'}, 
         casOut={name='orders_sum', replace=true};
 quit;
-title;
 
-cas mySession terminate;
+title;
 
 /* Stop timer */
 data _null_;
   dur = datetime() - &_timer_start;
   put 30*'-' / ' TOTAL DURATION:' dur time13.2 / 30*'-';
 run;
+
+cas mySess terminate;
